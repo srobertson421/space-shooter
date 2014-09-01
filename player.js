@@ -8,6 +8,7 @@ var Player = function(game) {
     this.rightButton = null;
     this.laserTime = 0;
     this.laserSound = null;
+    this.explosionSound = null;
 };
 
 Player.prototype = {
@@ -47,6 +48,9 @@ Player.prototype = {
         
         // Laser sound
         this.laserSound = this.game.add.audio('laser', 0.3, false);
+        
+        // Explosion Sound
+        this.explosionSound = this.game.add.audio('explosion', 0.3, false);
         
         // Create controls
         this.cursor = this.game.input.keyboard.createCursorKeys();
@@ -151,10 +155,18 @@ Player.prototype = {
         
     },
     
-    laserHit: function(laser, enemy) {
+    laserHit: function(laser, baddie) {
         
         laser.kill();
-        enemy.kill();
+        enemy.enemies.remove(baddie, true);
+        var explosion = enemy.explosions.getFirstExists(false);
+        explosion.reset(baddie.x, baddie.y);
+        explosion.play('explosion', 30, false, true);
+        this.explosionSound.play();
+        
+        if (enemy.enemies.countLiving() === 0) {
+            enemy.spawnEnemies();
+        }
         
     }
 };

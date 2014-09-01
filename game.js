@@ -71,6 +71,7 @@ var load_state = {
         // Musics
         game.load.audio('spaceTune', ['assets/SpaceAwesome.mp3', 'assets/SpaceAwesome.ogg']);
         game.load.audio('laser', ['assets/laser.mp3', 'assets/laser.ogg']);
+        game.load.audio('explosion', ['assets/explosion.mp3', 'assets/explosion.ogg']);
         
         
     },

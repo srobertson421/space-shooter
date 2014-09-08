@@ -18,7 +18,7 @@ var level_state = {
         
         player.update();
         
-        //enemy.update();
+        enemy.update();
         
     }
     

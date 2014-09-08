@@ -2,31 +2,55 @@ var Enemy = function(game) {
     this.game = game;
     this.enemies = null;
     this.explosions = null;
+    this.enemyLasers = null;
+    this.firingTimer = 0;
+    this.enemyLaser = null;
+    this.livingEnemies = [];
 };
 
 Enemy.prototype = {
     
     preload: function() {
         
+        // Load enemy images
         this.game.load.image('enemy1', 'assets/enemies/enemy1.png');
         this.game.load.image('enemy2', 'assets/enemies/enemy2.png');
         this.game.load.image('enemy3', 'assets/enemies/enemy3.png');
         this.game.load.image('enemy4', 'assets/enemies/enemy4.png');
         
+        // Load explosion spritesheet
         this.game.load.spritesheet('explosion', 'assets/explosion.png', 64, 64);
+        
+        // Add enemy lasers
+        this.game.load.image('enemyLaser1', 'assets/enemyLaser1.png');
+        this.game.load.image('enemyLaser2', 'assets/enemyLaser2.png');
+        this.game.load.image('enemyLaser3', 'assets/enemyLaser3.png');
         
     },
     
     create: function() {
         
+        // Create our enemies group
         this.enemies = this.game.add.group();
         this.enemies.enableBody = true;
         this.enemies.physicsBodyType = Phaser.Physics.ARCADE;
-        //this.enemies.createMultiple(3, 'enemy1');
         
+        // Create our explosions group
         this.explosions = this.game.add.group();
         this.explosions.createMultiple(20, 'explosion');
         this.explosions.forEach(this.explosionSet, this);
+        
+        // Create our enemy lasers group
+        this.enemyLasers = this.game.add.group();
+        this.enemyLasers.enableBody = true;
+        this.enemyLasers.physicsBodyType = Phaser.Physics.ARCADE;
+        this.enemyLasers.createMultiple(10, 'enemyLaser1');
+        this.enemyLasers.createMultiple(10, 'enemyLaser2');
+        this.enemyLasers.createMultiple(10, 'enemyLaser3');
+        this.enemyLasers.setAll('anchor.x', 0.5);
+        this.enemyLasers.setAll('anchor.y', 1);
+        this.enemyLasers.setAll('outOfBoundsKill', true);
+        this.enemyLasers.setAll('checkWorldBounds', true);
         
         this.spawnEnemies();
         
@@ -43,9 +67,13 @@ Enemy.prototype = {
     
     update: function() {
         
-        /*if (this.enemies.countLiving() === 0) {
-            this.spawnEnemies();
-        }*/
+        if (this.game.time.now > this.firingTimer && this.game.time.now > 10000) {
+            this.enemyShoot();
+            this.enemyShoot();
+            this.enemyShoot();
+        }
+        
+        this.game.physics.arcade.collide(this.enemyLasers, player.ship, this.enemyLaserHit, null, this);
         
     },
     
@@ -58,7 +86,6 @@ Enemy.prototype = {
         var enemyType = this.game.rnd.integerInRange(1, 4);
         var enemyPattern = this.game.rnd.integerInRange(1, 4);
         var enemyAmount = this.game.rnd.integerInRange(1, 6);
-        console.log(enemyAmount);
         
         this.game.time.events.repeat(Phaser.Timer.SECOND * 1, enemyAmount, this.createEnemy, this, enemyType, enemyPattern);
         
@@ -71,12 +98,16 @@ Enemy.prototype = {
         // Check enemyType and create the appropriate enemy
         if (enemyType === 1) {
             enemy = this.enemies.create(0, 0, 'enemy' + enemyType);
+            enemy.anchor.setTo(0.5,0.5);
         } else if (enemyType === 2) {
             enemy = this.enemies.create(this.game.world.width, 0, 'enemy' + enemyType);
+            enemy.anchor.setTo(0.5,0.5);
         } else if (enemyType === 3) {
             enemy = this.enemies.create(0, 0, 'enemy' + enemyType);
+            enemy.anchor.setTo(0.5,0.5);
         } else {
             enemy = this.enemies.create(this.game.world.width, 0, 'enemy' + enemyType);
+            enemy.anchor.setTo(0.5,0.5);
         }
         
         // Check enemyPattern and create appropriate tween animation
@@ -90,7 +121,45 @@ Enemy.prototype = {
             this.deltaPattern(enemy);
         }
         
-        console.log(this.enemies.countLiving());
+    },
+    
+    enemyShoot: function(color) {
+        
+        this.enemyLaser = this.enemyLasers.getFirstExists(false);
+        
+        this.livingEnemies = [];
+        
+        this.enemies.forEachAlive(this.createEnemyArray, this);
+        
+        if (this.enemyLaser && this.livingEnemies.length > 0) {
+            
+            var random = this.game.rnd.integerInRange(0, this.livingEnemies.length - 1);
+            
+            var shooter = this.livingEnemies[random];
+            
+            this.enemyLaser.reset(shooter.x, shooter.y);
+            
+            this.game.physics.arcade.moveToObject(this.enemyLaser, player.ship, 150);
+            this.firingTimer = this.game.time.now + 2000;
+            
+        }
+        
+    },
+    
+    enemyLaserHit: function(laser, ship) {
+        
+        laser.kill();
+        ship.kill();
+        var explosion = enemy.explosions.getFirstExists(false);
+        explosion.reset(ship.x, ship.y);
+        explosion.play('explosion', 30, false, true);
+        player.explosionSound.play();
+        
+    },
+    
+    createEnemyArray: function(enemy) {
+        
+        this.livingEnemies.push(enemy);
         
     },
     

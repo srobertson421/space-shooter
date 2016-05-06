@@ -1,4 +1,10 @@
-var game = new Phaser.Game(320, 480, Phaser.AUTO, 'game');
+var game = new Phaser.Game(320, 480, Phaser.AUTO, '');
+
+game.global = {
+    music: null,
+    score: 0,
+    bossNum: 0
+};
 
 // Our init or boot state
 // Loads progress bar, physics, and scaling
@@ -39,6 +45,11 @@ var boot_state = {
             // Appy the scale changes
             game.scale.setScreenSize();
             
+        } else {
+            
+            game.scale.pageAlignHorizontally = true;
+            game.scale.pageAlignVertically = true;
+            
         }
         
         game.state.start('load');
@@ -68,6 +79,9 @@ var load_state = {
         enemy = new Enemy(game);
         enemy.preload();
         
+        boss = new Boss(game);
+        boss.preload();
+        
         // Musics
         game.load.audio('spaceTune', ['assets/SpaceAwesome.mp3', 'assets/SpaceAwesome.ogg']);
         game.load.audio('laser', ['assets/laser.mp3', 'assets/laser.ogg']);
@@ -96,6 +110,8 @@ var menu_state = {
         var startLabel = game.add.text(game.world.centerX, game.world.centerY + 80, 'Tap to start', { font: '35px Arial', fill: '#ffffff' });
         startLabel.anchor.setTo(0.5, 0.5);
         
+        player.lives = 3;
+        
         game.input.onDown.addOnce(this.start, this);
         
     },
@@ -108,8 +124,31 @@ var menu_state = {
     
 };
 
+var victory_state = {
+    
+    create: function() {
+        
+        var victoryLabel = game.add.text(game.world.centerX, game.world.centerY, 'You Win!!', { font: '35px Arial', fill: '#ffffff' });
+        victoryLabel.anchor.setTo(0.5, 0.5);
+        
+        var playAgainLabel = game.add.text(game.world.centerX, game.world.centerY + 80, 'Tap to replay!', { font: '35px Arial', fill: '#ffffff' });
+        playAgainLabel.anchor.setTo(0.5, 0.5);
+        
+        player.lives = 3;
+        
+        game.input.onDown.addOnce(this.restart, this);
+        
+    },
+    
+    restart: function() {
+        game.state.start('level');
+    } 
+    
+};
+
 game.state.add('boot', boot_state);
 game.state.add('load', load_state);
 game.state.add('menu', menu_state);
 game.state.add('level', level_state);
+game.state.add('victory', victory_state);
 game.state.start('boot');

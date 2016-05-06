@@ -9,6 +9,8 @@ var Player = function(game) {
     this.laserTime = 0;
     this.laserSound = null;
     this.explosionSound = null;
+    this.lives = 3;
+    this.scoreText = null;
 };
 
 Player.prototype = {
@@ -31,10 +33,7 @@ Player.prototype = {
     create: function() {
         
         // Create our ship sprite
-        this.ship = this.game.add.sprite(this.game.world.centerX, this.game.world.height - 120, 'player');
-        this.ship.anchor.setTo(0.5, 0.5);
-        this.game.physics.arcade.enable(this.ship);
-        this.ship.body.collideWorldBounds = true;
+        this.createPlayer();
         
         // Create laser group for sprites
         this.lasers = this.game.add.group();
@@ -66,6 +65,9 @@ Player.prototype = {
             this.addMobileInputs();
         }
         
+        game.global.score = 0;
+        this.scoreText = game.add.text(32,game.world.height - 50, 'score: ' + game.global.score, { font: '25px Arial', fill: '#ffffff' });
+        
     },
     
     update: function() {
@@ -74,6 +76,15 @@ Player.prototype = {
         this.game.physics.arcade.collide(this.lasers, enemy.enemies, this.laserHit, null, this);
         
         this.playerControls();
+        
+    },
+    
+    createPlayer: function() {
+        
+        this.ship = this.game.add.sprite(this.game.world.centerX, this.game.world.height - 120, 'player');
+        this.ship.anchor.setTo(0.5, 0.5);
+        this.game.physics.arcade.enable(this.ship);
+        this.ship.body.collideWorldBounds = true;
         
     },
     
@@ -156,13 +167,19 @@ Player.prototype = {
     },
     
     laserHit: function(laser, baddie) {
-        
         laser.kill();
-        enemy.enemies.remove(baddie, true);
-        var explosion = enemy.explosions.getFirstExists(false);
-        explosion.reset(baddie.x, baddie.y);
-        explosion.play('explosion', 30, false, true);
-        this.explosionSound.play();
+        baddie.damage(1);
+        
+        if (baddie.health === 0) {
+            enemy.enemies.remove(baddie, true);
+            var explosion = enemy.explosions.getFirstExists(false);
+            explosion.reset(baddie.x, baddie.y);
+            explosion.play('explosion', 30, false, true);
+            this.explosionSound.play();
+            
+            game.global.score += baddie.points;
+            this.scoreText.text = 'score: ' + game.global.score;
+        }
         
         if (enemy.enemies.countLiving() === 0) {
             enemy.spawnEnemies();

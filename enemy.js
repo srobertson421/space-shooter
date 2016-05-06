@@ -34,6 +34,7 @@ Enemy.prototype = {
         this.enemies = this.game.add.group();
         this.enemies.enableBody = true;
         this.enemies.physicsBodyType = Phaser.Physics.ARCADE;
+        this.enemies.setAll('body.immovable', true);
         
         // Create our explosions group
         this.explosions = this.game.add.group();
@@ -44,9 +45,9 @@ Enemy.prototype = {
         this.enemyLasers = this.game.add.group();
         this.enemyLasers.enableBody = true;
         this.enemyLasers.physicsBodyType = Phaser.Physics.ARCADE;
-        this.enemyLasers.createMultiple(10, 'enemyLaser1');
-        this.enemyLasers.createMultiple(10, 'enemyLaser2');
-        this.enemyLasers.createMultiple(10, 'enemyLaser3');
+        this.enemyLasers.createMultiple(20, 'enemyLaser1');
+        this.enemyLasers.createMultiple(20, 'enemyLaser2');
+        this.enemyLasers.createMultiple(20, 'enemyLaser3');
         this.enemyLasers.setAll('anchor.x', 0.5);
         this.enemyLasers.setAll('anchor.y', 1);
         this.enemyLasers.setAll('outOfBoundsKill', true);
@@ -68,8 +69,6 @@ Enemy.prototype = {
     update: function() {
         
         if (this.game.time.now > this.firingTimer && this.game.time.now > 10000) {
-            this.enemyShoot();
-            this.enemyShoot();
             this.enemyShoot();
         }
         
@@ -99,15 +98,23 @@ Enemy.prototype = {
         if (enemyType === 1) {
             enemy = this.enemies.create(0, 0, 'enemy' + enemyType);
             enemy.anchor.setTo(0.5,0.5);
+            enemy.health = 1;
+            enemy.points = 10;
         } else if (enemyType === 2) {
             enemy = this.enemies.create(this.game.world.width, 0, 'enemy' + enemyType);
             enemy.anchor.setTo(0.5,0.5);
+            enemy.health = 2;
+            enemy.points = 15;
         } else if (enemyType === 3) {
             enemy = this.enemies.create(0, 0, 'enemy' + enemyType);
             enemy.anchor.setTo(0.5,0.5);
+            enemy.health = 2;
+            enemy.points = 20;
         } else {
             enemy = this.enemies.create(this.game.world.width, 0, 'enemy' + enemyType);
             enemy.anchor.setTo(0.5,0.5);
+            enemy.health = 4;
+            enemy.points = 30;
         }
         
         // Check enemyPattern and create appropriate tween animation
@@ -123,9 +130,11 @@ Enemy.prototype = {
         
     },
     
-    enemyShoot: function(color) {
+    enemyShoot: function() {
         
-        this.enemyLaser = this.enemyLasers.getFirstExists(false);
+        var ranInt = this.game.rnd.integerInRange(1,60);
+        
+        this.enemyLaser = this.enemyLasers.children[ranInt];
         
         this.livingEnemies = [];
         
@@ -155,6 +164,24 @@ Enemy.prototype = {
         explosion.play('explosion', 30, false, true);
         player.explosionSound.play();
         
+        if (player.lives != 0) {
+            
+            this.game.time.events.add(500, function() {
+                ship.destroy();
+                player.createPlayer();
+            });
+            
+            player.lives--;
+            
+        } else {
+            this.game.global.music.stop();
+            this.game.time.events.add(1000, this.startMenu, this);
+        }
+        
+    },
+    
+    startMenu: function() {
+        this.game.state.start('menu');
     },
     
     createEnemyArray: function(enemy) {
